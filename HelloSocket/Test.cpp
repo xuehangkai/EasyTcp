@@ -78,7 +78,7 @@ int main(){
 	client.SendData(s.data(),s.length());
 	while (client.isRun())
 	{
-		client.OnSelect();
+		client.OnRun();
 		CELLThread::Sleep(10);
 	}
 

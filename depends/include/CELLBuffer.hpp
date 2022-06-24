@@ -70,8 +70,16 @@ public:
 		if (_nlast > 0 && INVALID_SOCKET != sockfd) {
 			//发送数据
 			ret = send(sockfd, _pBuff, _nlast, 0);
-			//数据尾部置清零
-			_nlast = 0;
+
+			if (ret<=0) {
+				return SOCKET_ERROR;
+			}if (ret==_nlast) {
+				_nlast = 0;
+			}
+			else {
+				_nlast -= ret;
+				memcpy(_pBuff, _pBuff + ret, _nlast);
+			}
 			//
 			_fullCount = 0;
 		}
@@ -87,7 +95,7 @@ public:
 			if (nLen <= 0) {
 				//CELLLog_Info("客户端<Socket=%d>退出,任务结束\n", (int)pClient->getSockfd());
 				CELLLog_Info("read4socket, nLen=%d\n",nLen);
-				return nLen;
+				return SOCKET_ERROR;
 			}
 			//消息缓冲区的数据尾部位置后移
 			_nlast += nLen;

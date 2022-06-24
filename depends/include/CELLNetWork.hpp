@@ -32,6 +32,14 @@ public:
 	static void Init() {
 		static CELLNetWork obj;
 	}
+	static int make_reuseaddr(SOCKET fd) {
+		int flag = 1;
+		if (-1 == setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, sizeof(flag))) {
+			CELLLog_Info("setsockopt SO_REUSEADDR fail");
+			return SOCKET_ERROR;
+		}
+		return 0;
+	}
 private:
 
 };

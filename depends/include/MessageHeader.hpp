@@ -31,7 +31,8 @@ struct netmsg_Login : public netmsg_DataHeader
 	}
 	char userName[32];
 	char passWord[32];
-	char data[32];
+	char data[28];
+	int msgID;
 };
 
 struct netmsg_LoginR : public netmsg_DataHeader
@@ -42,7 +43,8 @@ struct netmsg_LoginR : public netmsg_DataHeader
 		result = 0;
 	}
 	int result;
-	char data[92];
+	char data[88];
+	int msgID;
 };
 
 struct netmsg_Loginout : public netmsg_DataHeader

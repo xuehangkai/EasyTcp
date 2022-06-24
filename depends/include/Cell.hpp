@@ -3,13 +3,16 @@
 
 //SOCKET
 #ifdef _WIN32
-	#define FD_SETSIZE	10240
+	#define FD_SETSIZE	65535
 	#define WIN32_LEAN_AND_MEAN
 	#define _WINSOCK_DEPRECATED_NO_WARNINGS 
 	#include<Windows.h>
 	#include<WinSock2.h>
 	#pragma comment(lib,"ws2_32.lib")
 #else
+#ifdef __APPLE__
+	#define _DARWIN_UNLIMITED_SELECT
+#endif // !__APPLE__
 	#include<unistd.h>// uni std
 	#include<arpa/inet.h>
 	#include<string.h>
@@ -32,8 +35,8 @@
 
 //缓冲区最小单元大小
 #ifndef RECV_BUFF_SZIE
-	#define RECV_BUFF_SZIE 8192
-	#define SEND_BUFF_SZIE 10240
+	#define RECV_BUFF_SZIE 81920
+	#define SEND_BUFF_SZIE 81920
 #endif
 #endif // !_Cell_hpp_
 

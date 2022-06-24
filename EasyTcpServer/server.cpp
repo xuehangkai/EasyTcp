@@ -1,6 +1,7 @@
 ﻿#include "EasyTcpServer.hpp"
 #include"CELLMsgStream.hpp"
 #include"CELLConfig.hpp"
+
 //bool g_bRun = true;
 //void cmdThread() {
 //	while (g_bRun) {
@@ -24,6 +25,13 @@
 
 class MyServer:public EasyTcpServer {
 public: 
+
+	MyServer()
+	{
+		_bSendBack = CELLConfig::Instance().hasKey("-sendback");
+		_bSendFull = CELLConfig::Instance().hasKey("-sendfull");
+		_bCheckMsgID = CELLConfig::Instance().hasKey("-checkMsgID");
+	}
 	//只会被一个线程调用 安全
 	virtual void OnNetJoin(CellClient* pClient) {
 		EasyTcpServer::OnNetJoin(pClient);
@@ -46,12 +54,32 @@ public:
 			pClient->resetDTHeart();
 			netmsg_Login* login = (netmsg_Login*)header;
 			//CELLLog_Info("收到客户端<Socket=%d>请求:CMD_LOGIN,数据长度：%d,username: %s,password: %s\n", (int)cSocket, login->dataLength, login->userName, login->passWord);
-			netmsg_LoginR ret ;
-			if (SOCKET_ERROR==pClient->SendData(&ret)) {
-
-				//发送缓冲区满了，消息没发出去
-				CELLLog_Info("recv <socker=%d> Send Full \n", pClient->getSockfd()); 
+			if (_bCheckMsgID) {
+				if (login->msgID!=pClient->nRecvMsgID) {
+					CELLLog_Error("OnNetMsg socket<%d> msgID<%d> _nRecvMsgID<%d> %d\n",pClient);
+				}
+				++pClient->nRecvMsgID;
 			}
+			if (_bSendBack)
+			{
+				netmsg_LoginR ret;
+				ret.msgID = pClient->nSendMsgID;
+				if (SOCKET_ERROR == pClient->SendData(&ret))
+				{
+					//发送缓冲区满了，消息没发出去,目前直接抛弃了
+					//客户端消息太多，需要考虑应对策略
+					//正常连接，业务客户端不会有这么多消息
+					//模拟并发测试时是否发送频率过高
+					if (_bSendFull)
+					{
+						CELLLog_Warring("<Socket=%d> Send Full\n", pClient->getSockfd());
+					}
+				}
+				else {
+					++pClient->nSendMsgID;
+				}
+			}
+			
 			//netmsg_LoginR* ret=new netmsg_LoginR();
 
 			//pCellServer->addSendTask(pClient,ret);
@@ -118,19 +146,23 @@ public:
 	virtual void OnNetRecv(CellClient* pClient) {
 		EasyTcpServer::OnNetRecv(pClient);
 	}
-
 private:
+	//自定义标志 收到消息后将返回应答消息
+	bool _bSendBack;
+	//自定义标志 是否提示：发送缓冲区已写满
+	bool _bSendFull;
+	//是否检查接收到的消息ID是否连续
+	bool _bCheckMsgID;
 };
 
 int main(int argc,char * args[]) {
 
-	CELLLog::Instance().setLogPath("serverLog", "w");
+	CELLLog::Instance().setLogPath("serverLog", "w",false);
 
 	CELLConfig::Instance().Init(argc,args);
 	const char* strIP = CELLConfig::Instance().getStr("strIP", "any");
 	uint16_t nPort = CELLConfig::Instance().getInt("nPort", 4567);
 	int nThread = CELLConfig::Instance().getInt("nThread", 1);
-	int nClient = CELLConfig::Instance().getInt("nClient", 1);
 
 	if (CELLConfig::Instance().hasKey("-p")) {
 		CELLLog_Info("hasKey -p\n");
@@ -168,6 +200,7 @@ int main(int argc,char * args[]) {
 		}
 	}
 
+	CELLLog_Info("exit.\n");
 	/*CellTaskServer task;
 	task.Start();
 		Sleep(100);

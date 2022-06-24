@@ -12,7 +12,8 @@
 #include"CellServer.hpp"
 #include"INetEvent.hpp"
 #include"CELLNetWork.hpp"
-
+#include"CELLConfig.hpp"
+#include"CELLFDSet.hpp"
 
 //new 在堆内存
 class EasyTcpServer : public INetEvent
@@ -24,7 +25,14 @@ private:
 	std::vector<CellServer*> _cellServers;
 	//每秒消息计时
 	CELLTimestamp _tTime;
+	//
 	SOCKET _sock;
+	//客户端发送缓冲区大小
+	int _nSendBuffSize;
+	//客户端接收缓冲区大小
+	int _nRecvBuffSize;
+	//客户端连接上限
+	int _nMaxClient;
 protected:
 	//收到消息计数
 	std::atomic_int _recvCount;
@@ -39,6 +47,9 @@ public:
 		_recvCount = 0;
 		_clientCount = 0;
 		_msgCount = 0;
+		_nSendBuffSize = CELLConfig::Instance().getInt("nSendBuffSize", SEND_BUFF_SZIE);
+		_nRecvBuffSize = CELLConfig::Instance().getInt("nRecvBuffSize", RECV_BUFF_SZIE);
+		_nMaxClient = CELLConfig::Instance().getInt("nMaxClient", FD_SETSIZE);
 	}
 	virtual ~EasyTcpServer() {
 		Close();
@@ -58,6 +69,7 @@ public:
 		}
 		else
 		{
+			CELLNetWork::make_reuseaddr(_sock);
 			CELLLog_Info("建立sock=%d套接字成功\n",(int)_sock);
 		}
 		return _sock;
@@ -121,10 +133,20 @@ public:
 		}
 		else
 		{
-			netmsg_NewUserJoin userJoin;
-			//SendDataToAll(&userJoin);
-			addClientToCellServer(new CellClient(cSocket));
-			//CELLLog_Info("socket=<%d>新客户端加入：csocket=%d ,ip= %s \n", (int)_sock,(int)cSocket, inet_ntoa(clientAddr.sin_addr));
+			if (_clientCount < _nMaxClient)
+			{
+				//将新客户端分配给客户数量最少的cellServer
+				addClientToCellServer(new CellClient(cSocket, _nSendBuffSize, _nRecvBuffSize));
+				//获取IP地址 inet_ntoa(clientAddr.sin_addr)
+			}
+			else {
+#ifdef _WIN32
+				closesocket(cSocket);
+#else	
+				close(cSocket);
+#endif
+				CELLLog_Warring("Accept to nMaxClient.\n");
+			}
 		}
 		return cSocket;
 	}
@@ -195,28 +217,28 @@ public:
 private:
 	//处理网络消息
 	void onRun(CELLThread* pThread) {
+		CELLFDSet fdRead;
 		while (pThread->isRun()) {
 			time4msg();
-			fd_set fdRead;
 			//fd_set fdWrite;
 			//fd_set fdExp;
-			FD_ZERO(&fdRead);
+			fdRead.zero();
 			//FD_ZERO(&fdWrite);
 			//FD_ZERO(&fdExp);
-			FD_SET(_sock, &fdRead);
+			fdRead.add(_sock);
 			//FD_SET(_sock, &fdWrite);
 			//FD_SET(_sock, &fdExp);
 
 			timeval t = { 0,1 };
-			int ret = select(_sock + 1, &fdRead, nullptr, nullptr, &t);
+			int ret = select(_sock + 1, fdRead.fdset(), nullptr, nullptr, &t);
 			if (ret < 0) {
 				CELLLog_Info("EasyTcpServer.OnRun Accept Select exit。\n");
 				pThread->Exit();
 				break;
 			}
 			//判断描述符（socket）是否在集合中
-			if (FD_ISSET(_sock, &fdRead)) {
-				FD_CLR(_sock, &fdRead);
+			if (fdRead.has(_sock)) {
+				//fdRead.del(_sock);
 				Accept();
 			}
 			//CELLLog_Info("空闲时间处理其他业务。。\n");
@@ -228,7 +250,7 @@ private:
 	void time4msg() {
 		auto t1 = _tTime.getElapsedSecond();
 		if (t1 >= 1.0) {
-			CELLLog_Info("thread<%d>, time<%lf>, socket<%d>, clients<%d>, recvCount<%d>, msgCount<%d>\n", (int)_cellServers.size(), t1, (int)_sock, (int)_clientCount, (int)(_recvCount / t1), (int)(_msgCount / t1));
+			CELLLog_Info("thread<%d>, time<%lf>, socket<%d>, clients<%d>, recv<%d>, msgCount<%d>\n", (int)_cellServers.size(), t1, (int)_sock, (int)_clientCount, (int)_recvCount, (int)_msgCount);
 			_recvCount = 0;
 			_msgCount = 0;
 			_tTime.update();

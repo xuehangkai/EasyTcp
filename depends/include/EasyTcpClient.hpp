@@ -5,6 +5,7 @@
 #include"MessageHeader.hpp"
 #include"CELLNetWork.hpp"
 #include"CellClient.hpp"
+#include"CELLFDSet.hpp"
 
 class EasyTcpClient
 {
@@ -18,7 +19,7 @@ public:
 	}
 
 	//初始化socket
-	void initSocket() {
+	SOCKET InitSocket(int sendSize=SEND_BUFF_SZIE,int recvSize=RECV_BUFF_SZIE) {
 		CELLNetWork::Init();
 		//1、建立一个socket
 		if (_pClient) {
@@ -31,14 +32,18 @@ public:
 		}
 		else
 		{
+			CELLNetWork::make_reuseaddr(sock);
 			//CELLLog_Info("建立套接字socket=%d成功\n", (int)sock);
-			_pClient = new CellClient(sock);
+			_pClient = new CellClient(sock,sendSize,recvSize);
 		}
+		return sock;
 	}
 	//连接服务器
 	int Connect(const char* ip,short port) {
 		if (!_pClient) {
-			initSocket();
+			if (INVALID_SOCKET==InitSocket()) {
+				return SOCKET_ERROR;
+			}
 		}
 		//CELLLog_Info("<socket=%d>正在连接服务器<%s:%d>。。。\n", (int)_pClient->getSockfd(), ip, port);
 		sockaddr_in _sin = {};
@@ -69,38 +74,37 @@ public:
 		_isConnect = false;
 	}
 	//处理网络消息
-	bool OnSelect() {
+	bool OnRun(int microseconds = 1) {
 		if (isRun()) {
 			SOCKET _sock = _pClient->getSockfd();
-;			fd_set fdRead;
-			FD_ZERO(&fdRead);
-			FD_SET(_sock, &fdRead);
 
-			fd_set fdWrite;
-			FD_ZERO(&fdWrite);
+			_fdRead.zero();
+			_fdRead.add(_sock);
 
-			timeval t = { 0,1 };
+			_fdWrite.zero();
+
+			timeval t = { 0,microseconds };
 			int ret = 0;
 			if (_pClient->needWrite()) {
-				FD_SET(_sock, &fdWrite);
-				ret = select(_sock + 1, &fdRead, &fdWrite, nullptr, &t);
+				_fdWrite.add(_sock);
+				ret = select(_sock + 1, _fdRead.fdset(), _fdWrite.fdset(), nullptr, &t);
 			}
 			else {
-				ret = select(_sock + 1, &fdRead, nullptr, nullptr, &t);
+				ret = select(_sock + 1, _fdRead.fdset(), nullptr, nullptr, &t);
 			}
 			if (ret < 0) {
 				CELLLog_Info("error,<sock=%d>OnRun.select 任务结束。\n",(int) _sock);
 				Close();
 				return false;
 			}
-			if (FD_ISSET(_sock, &fdRead)) {
+			if (_fdRead.has(_sock)) {
 				if (SOCKET_ERROR == RecvData(_sock)) {
 					CELLLog_Info("error,<sock=%d>OnRun.select RecvData任务结束。\n", (int)_sock);
 					Close();
 					return false;
 				}
 			}
-			if (FD_ISSET(_sock, &fdWrite)) {
+			if (_fdWrite.has(_sock)) {
 				if (SOCKET_ERROR == _pClient->SendDataReal()) {
 					CELLLog_Info("error,<sock=%d>OnRun.select SendDataReal任务结束。\n", (int)_sock);
 					Close();
@@ -151,6 +155,8 @@ public:
 		return 0;
 	}
 protected:
+	CELLFDSet _fdRead;
+	CELLFDSet _fdWrite;
 	CellClient* _pClient=nullptr;
 	bool _isConnect=false;
 };

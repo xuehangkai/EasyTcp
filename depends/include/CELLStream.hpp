@@ -90,7 +90,7 @@ public:
 		//读取数组元素个数，但不偏移读取位置
 		Read(len1,false);
 		//判断缓存数组能否放得下
-		if (len1<len) {
+		if (len1<=len) {
 			//计算数组的字节长度
 			auto nLen = len1 * sizeof(T);
 			//判断能不能读出

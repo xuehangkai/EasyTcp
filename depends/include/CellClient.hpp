@@ -14,12 +14,19 @@
 class CellClient
 {
 public:
-	int id=-1;
+	int id = -1;
+	//所属serverid
 	int serverId = -1;
+	//测试接收发逻辑用
+	//用于server检测接收到的消息ID是否连续
+	int nRecvMsgID = 1;
+	//测试接收发逻辑用
+	//用于client检测接收到的消息ID是否连续
+	int nSendMsgID = 1;
 public:
-	CellClient(SOCKET sockfd = INVALID_SOCKET) :
-		_sendBuff(SEND_BUFF_SZIE),
-		_recvBuff(RECV_BUFF_SZIE)
+	CellClient(SOCKET sockfd = INVALID_SOCKET, int sendSize = SEND_BUFF_SZIE, int recvSize = RECV_BUFF_SZIE) :
+		_sendBuff(sendSize),
+		_recvBuff(recvSize)
 	{
 		static int n = 1;
 		id = n++;
