@@ -40,6 +40,17 @@ public:
 		}
 		return 0;
 	}
+	static int destorySocket(SOCKET fd) {
+#ifdef	_WIN32
+		int ret=closesocket(fd);
+#else
+		int ret=close(fd);
+#endif
+		if (ret<0) {
+			CELLLog_PError("cellnetwork::destorySocket sockfd<%d>",(int)fd);
+		}
+		return ret;
+	}
 private:
 
 };

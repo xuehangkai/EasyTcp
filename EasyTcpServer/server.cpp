@@ -1,4 +1,5 @@
-﻿#include "EasyTcpServer.hpp"
+﻿#include "EasySelectServer.hpp"
+//#include"EasyEpollServer.hpp"
 #include"CELLMsgStream.hpp"
 #include"CELLConfig.hpp"
 
@@ -23,7 +24,7 @@
 //	}
 //}
 
-class MyServer:public EasyTcpServer {
+class MyServer:public EasySelectServer {
 public: 
 
 	MyServer()
@@ -174,6 +175,7 @@ int main(int argc,char * args[]) {
 
 	MyServer server;
 	server.iniSocket();
+	server.Bind(strIP, nPort);
 	server.Bind(strIP, nPort);
 	server.Listen(64);
 	server.Start(nThread);

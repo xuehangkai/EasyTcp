@@ -1,4 +1,4 @@
-#ifndef _CELL_THREAD_HPP_
+ï»¿#ifndef _CELL_THREAD_HPP_
 #define _CELL_THREAD_HPP_
 
 #include<thread>
@@ -19,7 +19,7 @@ private:
 	typedef std::function<void(CELLThread*)> EventCall;
 
 public:
-	//Æô¶¯Ïß³Ì
+	//å¯åŠ¨çº¿ç¨‹
 	void Start(EventCall onCreate=nullptr, EventCall onRun = nullptr, EventCall onDestory = nullptr) {
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (!_isRun) {
@@ -37,7 +37,7 @@ public:
 			t.detach();
 		}
 	};
-	//¹Ø±ÕÏß³Ì
+	//å…³é—­çº¿ç¨‹
 	void Close() {
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (_isRun) {
@@ -45,19 +45,19 @@ public:
 			_sem.wait();
 		}
 	};
-	//ÔÚ¹¤×÷Ïß³ÌÖĞÍË³öÓ¦¸Ã²»ĞèÒªÊ¹ÓÃĞÅºÅÁ¿À´×èÈûµÈ´ı£¬Èç¹ûÊ¹ÓÃ»á×èÈû
+	//åœ¨å·¥ä½œçº¿ç¨‹ä¸­é€€å‡ºåº”è¯¥ä¸éœ€è¦ä½¿ç”¨ä¿¡å·é‡æ¥é˜»å¡ç­‰å¾…ï¼Œå¦‚æœä½¿ç”¨ä¼šé˜»å¡
 	void Exit() {
 		if (_isRun) {
 			_isRun = false;
 		}
 	};
 
-	//Ïß³ÌÊÇ·ñÔËĞĞ×´Ì¬
+	//çº¿ç¨‹æ˜¯å¦è¿è¡ŒçŠ¶æ€
 	bool isRun() {
 		return _isRun;
 	}
 protected:
-	//Ïß³ÌÔËĞĞÊ±µÄ¹¤×÷º¯Êı
+	//çº¿ç¨‹è¿è¡Œæ—¶çš„å·¥ä½œå‡½æ•°
 	void OnWork() {
 		if (_onCreate) {
 			_onCreate (this);
@@ -75,11 +75,11 @@ private:
 	EventCall _onCreate;
 	EventCall _onRun;
 	EventCall _onDestory;
-	//²»Í¬Ïß³Ì¸Ä±äÊı¾İÊ±ĞèÒª¼ÓËø
+	//ä¸åŒçº¿ç¨‹æ”¹å˜æ•°æ®æ—¶éœ€è¦åŠ é”
 	std::mutex _mutex;
-	//¿ØÖÆÏß³ÌÖÕÖ¹¡¢ÍË³ö
+	//æ§åˆ¶çº¿ç¨‹ç»ˆæ­¢ã€é€€å‡º
 	CELLSemaphore _sem;
-	//Ïß³ÌÊÇ·ñÆô¶¯ÔËĞĞÖĞ
+	//çº¿ç¨‹æ˜¯å¦å¯åŠ¨è¿è¡Œä¸­
 	bool _isRun = false;
 };
 

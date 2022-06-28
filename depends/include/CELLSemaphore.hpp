@@ -1,26 +1,26 @@
-#ifndef _CELL_SEMAPHPRE_HPP_
+ï»¿#ifndef _CELL_SEMAPHPRE_HPP_
 #define _CELL_SEMAPHPRE_HPP_
 
 #include<chrono>
 #include<thread>
 #include<condition_variable>
 
-//ĞÅºÅÁ¿
+//ä¿¡å·é‡
 class CELLSemaphore
 {
 public:
-	//×èÈûµ±Ç°Ïß³Ì
+	//é˜»å¡å½“å‰çº¿ç¨‹
 	void wait() {
 		std::unique_lock<std ::mutex> lock(_mutex);
 		if (--_wait<0) {
-			//×èÈûµÈ´ı
+			//é˜»å¡ç­‰å¾…
 			_cv.wait(lock, [this]()->bool {
 				return _wakeup > 0;
 			});
 			--_wakeup;
 		}
 	}
-	//»½ĞÑµ±Ç°Ïß³Ì
+	//å”¤é†’å½“å‰çº¿ç¨‹
 	void wakeup() {
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (++_wait<=0) {
@@ -29,13 +29,13 @@ public:
 		}
 	}
 private:
-	//¸Ä±äÊı¾İ»º³åÇøĞè¼ÓËø
+	//æ”¹å˜æ•°æ®ç¼“å†²åŒºéœ€åŠ é”
 	std::mutex _mutex;
-	//×èÈûµÈ´ı-Ìõ¼ş±äÁ¿
+	//é˜»å¡ç­‰å¾…-æ¡ä»¶å˜é‡
 	std::condition_variable _cv;
-	//µÈ´ı¼ÆÊı
+	//ç­‰å¾…è®¡æ•°
 	int _wait = 0;
-	//»½ĞÑ¼ÆÊı
+	//å”¤é†’è®¡æ•°
 	int _wakeup = 0;
 };
 

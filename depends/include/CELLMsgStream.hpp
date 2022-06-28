@@ -1,10 +1,10 @@
-#ifndef _CELL_MSG_STREAM_HPP_
+ï»¿#ifndef _CELL_MSG_STREAM_HPP_
 #define _CELL_MSG_STREAM_HPP_
 
 
 #include"MessageHeader.hpp"
 #include"CELLStream.hpp"
-//ÏûÏ¢Êı¾İ×Ö½ÚÁ÷
+//æ¶ˆæ¯æ•°æ®å­—èŠ‚æµ
 class CELLRecvStream :public CELLStream
 {
 public:
@@ -22,20 +22,20 @@ public:
 	}
 };
 
-//ÏûÏ¢Êı¾İ×Ö½ÚÁ÷
+//æ¶ˆæ¯æ•°æ®å­—èŠ‚æµ
 class CELLSendStream :public CELLStream
 {
 public:
 	CELLSendStream(char* pData, int nSize, bool bDelete = false)
 		:CELLStream(pData, nSize, bDelete)
 	{
-		//Ô¤ÏÈÕ¼ÁìÏûÏ¢³¤¶ÈËùĞèµÄ¿Õ¼ä
+		//é¢„å…ˆå é¢†æ¶ˆæ¯é•¿åº¦æ‰€éœ€çš„ç©ºé—´
 		Write<uint16_t>(0);
 	}
 	CELLSendStream(int nSize = 1024)
 		:CELLStream(nSize)
 	{
-		//Ô¤ÏÈÕ¼ÁìÏûÏ¢³¤¶ÈËùĞèµÄ¿Õ¼ä
+		//é¢„å…ˆå é¢†æ¶ˆæ¯é•¿åº¦æ‰€éœ€çš„ç©ºé—´
 		Write<uint16_t>(0);
 	}
 

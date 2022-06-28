@@ -1,4 +1,4 @@
-#ifndef _CELL_HPP_
+ï»¿#ifndef _CELL_HPP_
 #define _CELL_HPP_
 
 //SOCKET
@@ -24,7 +24,7 @@
 #endif
 
 
-//×Ô¶¨Òå
+//è‡ªå®šä¹‰
 #include"MessageHeader.hpp"	
 #include"CELLTimestamp.hpp"
 #include"CELLTask.hpp"
@@ -33,7 +33,7 @@
 //
 #include<stdio.h>
 
-//»º³åÇø×îĞ¡µ¥Ôª´óĞ¡
+//ç¼“å†²åŒºæœ€å°å•å…ƒå¤§å°
 #ifndef RECV_BUFF_SZIE
 	#define RECV_BUFF_SZIE 81920
 	#define SEND_BUFF_SZIE 81920

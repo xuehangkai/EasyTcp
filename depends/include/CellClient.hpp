@@ -1,27 +1,28 @@
-#ifndef _CellClient_hpp_
+ï»¿#ifndef _CellClient_hpp_
 #define _CellClient_hpp_
 
 #include"Cell.hpp"
 #include"CELLBuffer.hpp"
+#include"CELLNetWork.hpp"
 
-//¿Í»§¶ËĞÄÌø¼ì²âËÀÍö¼ÆÊ±Ê±¼ä
+//å®¢æˆ·ç«¯å¿ƒè·³æ£€æµ‹æ­»äº¡è®¡æ—¶æ—¶é—´
 #define CLIENT_HEART_DEAD_TIME 60000
 
-//ÔÚ¼ä¸ôÖ¸¶¨Ê±¼äºó°Ñ·¢ËÍ»º³åÇøÄÚ»º´æµÄÏûÏ¢Êı¾İ·¢ËÍ¸ø¿Í»§¶Ë
+//åœ¨é—´éš”æŒ‡å®šæ—¶é—´åæŠŠå‘é€ç¼“å†²åŒºå†…ç¼“å­˜çš„æ¶ˆæ¯æ•°æ®å‘é€ç»™å®¢æˆ·ç«¯
 #define CLIENT_SEND_BUFF_TIME 200
 
-//¿Í»§¶ËÊı¾İÀàĞÍ
+//å®¢æˆ·ç«¯æ•°æ®ç±»å‹
 class CellClient
 {
 public:
 	int id = -1;
-	//ËùÊôserverid
+	//æ‰€å±serverid
 	int serverId = -1;
-	//²âÊÔ½ÓÊÕ·¢Âß¼­ÓÃ
-	//ÓÃÓÚserver¼ì²â½ÓÊÕµ½µÄÏûÏ¢IDÊÇ·ñÁ¬Ğø
+	//æµ‹è¯•æ¥æ”¶å‘é€»è¾‘ç”¨
+	//ç”¨äºserveræ£€æµ‹æ¥æ”¶åˆ°çš„æ¶ˆæ¯IDæ˜¯å¦è¿ç»­
 	int nRecvMsgID = 1;
-	//²âÊÔ½ÓÊÕ·¢Âß¼­ÓÃ
-	//ÓÃÓÚclient¼ì²â½ÓÊÕµ½µÄÏûÏ¢IDÊÇ·ñÁ¬Ğø
+	//æµ‹è¯•æ¥æ”¶å‘é€»è¾‘ç”¨
+	//ç”¨äºclientæ£€æµ‹æ¥æ”¶åˆ°çš„æ¶ˆæ¯IDæ˜¯å¦è¿ç»­
 	int nSendMsgID = 1;
 public:
 	CellClient(SOCKET sockfd = INVALID_SOCKET, int sendSize = SEND_BUFF_SZIE, int recvSize = RECV_BUFF_SZIE) :
@@ -38,11 +39,7 @@ public:
 	~CellClient() {
 		CELLLog_Debug("<s=%d>CellClient<%d>.~CellClient\n",serverId,id);
 		if (INVALID_SOCKET!=_sockfd) {
-#ifdef _WIN32
-			closesocket(_sockfd);
-#else
-			close(_sockfd);
-#endif
+			CELLNetWork::destorySocket(_sockfd);
 			_sockfd = INVALID_SOCKET;
 		}
 	}
@@ -71,13 +68,13 @@ public:
 	bool needWrite() {
 		return _sendBuff.needWrite();
 	}
-	//Á¢¼´½«»º³åÇøµÄÊı¾İ·¢ËÍ¸ø¿Í»§¶Ë
+	//ç«‹å³å°†ç¼“å†²åŒºçš„æ•°æ®å‘é€ç»™å®¢æˆ·ç«¯
 	int SendDataReal() {
 		resetDTSend();
 		return _sendBuff.write2socket(_sockfd);
 	}
-	//»º³åÇøµÄ¿ØÖÆ¸ù¾İÒµÎñĞèÇóµÄ²îÒì¶øµ÷Õû
-	//·¢ËÍÊı¾İ
+	//ç¼“å†²åŒºçš„æ§åˆ¶æ ¹æ®ä¸šåŠ¡éœ€æ±‚çš„å·®å¼‚è€Œè°ƒæ•´
+	//å‘é€æ•°æ®
 	int SendData(netmsg_DataHeader* header) {
 		return SendData((const char*)header, header->dataLength);
 	}
@@ -96,7 +93,7 @@ public:
 	void resetDTSend() {
 		_dtSend = 0;
 	}
-	//ĞÄÌø¼ì²â
+	//å¿ƒè·³æ£€æµ‹
 	bool checkHeart(time_t dt) {
 		_dtHeart += dt;
 		if (_dtHeart>=CLIENT_HEART_DEAD_TIME) {
@@ -105,14 +102,14 @@ public:
 		}
 		return false;
 	}
-	//¶¨Ê±·¢ËÍÏûÏ¢
+	//å®šæ—¶å‘é€æ¶ˆæ¯
 	bool checkSend(time_t dt) {
 		_dtSend += dt;
 		if (_dtSend >= CLIENT_SEND_BUFF_TIME) {
 			//CELLLog_Info("_dtSend:socket= %d,time=%d\n", _sockfd, _dtSend);
-			//Á¢¼´½«»º³åÇøµÄÊı¾İ·¢ËÍ³öÈ¥
+			//ç«‹å³å°†ç¼“å†²åŒºçš„æ•°æ®å‘é€å‡ºå»
 			SendDataReal();
-			//ÖØÖÃ·¢ËÍ¼ÆÊ±
+			//é‡ç½®å‘é€è®¡æ—¶
 			resetDTSend();
 			return true;
 		}
@@ -121,15 +118,15 @@ public:
 private:
 	// socket fd_set file desc set
 	SOCKET _sockfd;
-	//½ÓÊÕÏûÏ¢»º³åÇø
+	//æ¥æ”¶æ¶ˆæ¯ç¼“å†²åŒº
 	CELLBuffer _recvBuff;
-	//·¢ËÍ»º³åÇø
+	//å‘é€ç¼“å†²åŒº
 	CELLBuffer _sendBuff;
-	//ĞÄÌøËÀÍö¼ÆÊ±
+	//å¿ƒè·³æ­»äº¡è®¡æ—¶
 	time_t _dtHeart;
-	//ÉÏ´Î·¢ËÍÏûÏ¢Êı¾İµÄÊ±¼ä
+	//ä¸Šæ¬¡å‘é€æ¶ˆæ¯æ•°æ®çš„æ—¶é—´
 	time_t _dtSend;
-	//·¢ËÍ»º³åÇøÓöµ½Ğ´ÂúÇé¿ö¼ÆÊı
+	//å‘é€ç¼“å†²åŒºé‡åˆ°å†™æ»¡æƒ…å†µè®¡æ•°
 	int _sendBuffFullCount = 0;
 
 };
