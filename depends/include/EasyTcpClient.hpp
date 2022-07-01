@@ -88,16 +88,20 @@ public:
 			int nLen = _pClient->RecvData();
 			if (nLen > 0) {
 				//循环 判断是否有消息需要处理
-				while (_pClient->hasMsg()) {
-					//处理网络消息
-					OnNetMsg(_pClient->front_msg());
-					//移除消息队列（缓冲区）最前的一条数据
-					_pClient->pop_front_msg();
-				}
+				DoMsg();
 			}
 			return nLen;
 		}
 		return 0;
+	}
+	void DoMsg() {
+		//循环 判断是否有消息需要处理
+		while (_pClient->hasMsg()) {
+			//处理网络消息
+			OnNetMsg(_pClient->front_msg());
+			//移除消息队列（缓冲区）最前的一条数据
+			_pClient->pop_front_msg();
+		}
 	}
 	//响应网络消息
 	virtual void OnNetMsg(netmsg_DataHeader* header)=0;

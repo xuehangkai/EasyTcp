@@ -1,4 +1,5 @@
-﻿#include"EasyTcpClient.hpp"
+﻿//#include"EasySelectClient.hpp"
+#include"EasyIOCPClient.hpp"
 #include"CELLTimestamp.hpp"
 #include"CELLConfig.hpp"
 
@@ -32,7 +33,7 @@ int nSendBuffSize = SEND_BUFF_SZIE;
 //客户端接收缓冲区大小
 int nRecvBuffSize = RECV_BUFF_SZIE;
 
-class MyClient:public EasyTcpClient
+class MyClient:public EasyIOCPClient
 {
 public:
 

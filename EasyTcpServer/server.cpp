@@ -1,30 +1,10 @@
-﻿#include "EasySelectServer.hpp"
+﻿//#include "EasySelectServer.hpp"
 //#include"EasyEpollServer.hpp"
+#include"EasyIOCPServer.hpp"
 #include"CELLMsgStream.hpp"
 #include"CELLConfig.hpp"
 
-//bool g_bRun = true;
-//void cmdThread() {
-//	while (g_bRun) {
-//		char cmdBuf[256] = {};
-//#ifdef _WIN32
-//		scanf_s("%s", cmdBuf, 256);
-//#else
-//		scanf("%s", cmdBuf);
-//#endif
-//		if (0 == strcmp(cmdBuf, "exit")) {
-//			g_bRun = false;
-//			CELLLog_Info("退出cmdThread线程\n");
-//			break;
-//		}
-//		else
-//		{
-//			CELLLog_Info("不支持的命令\n");
-//		}
-//	}
-//}
-
-class MyServer:public EasySelectServer {
+class MyServer:public EasyIOCPServer {
 public: 
 
 	MyServer()
@@ -175,7 +155,6 @@ int main(int argc,char * args[]) {
 
 	MyServer server;
 	server.iniSocket();
-	server.Bind(strIP, nPort);
 	server.Bind(strIP, nPort);
 	server.Listen(64);
 	server.Start(nThread);

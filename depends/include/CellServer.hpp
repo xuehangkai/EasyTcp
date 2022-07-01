@@ -80,20 +80,23 @@ public:
 		auto dt = nowTime - _oldTime;
 		_oldTime = nowTime;
 		for (auto iter = _clients.begin(); iter != _clients.end();) {
+			auto pClient = iter->second;
 			//心跳检测
 			if (iter->second->checkHeart(dt)) {
-				if (_pNetEvent) {
-					_pNetEvent->OnNetLeave(iter->second);
-				}
-				_clients_change = true;
-				delete iter->second;
-				auto iterOld = iter;
-				iter++;
-				_clients.erase(iterOld);
+#ifdef CELL_USE_IOCP
+				if (pClient->isPostIoAction())
+					pClient->destory();
+				else
+					OnClientLeave(pClient);
+#else
+				OnClientLeave(pClient);
+#endif // CELL_USE_IOCP
+				_clients.erase(iter);
+				//iter++;
 				continue;
 			}
 			////定时发送检测
-			//iter->second->checkSend(dt);
+			//pClient->checkSend(dt);
 			iter++;
 		}
 	}
@@ -107,6 +110,12 @@ public:
 
 	virtual void OnClientJoin(CellClient * pClient){
 		
+	}
+
+	void OnNetRecv(CellClient* pClient)
+	{
+		if (_pNetEvent)
+			_pNetEvent->OnNetRecv(pClient);
 	}
 
 	void DoMsg() {

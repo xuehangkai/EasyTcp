@@ -27,12 +27,7 @@ private:
 	CELLTimestamp _tTime;
 	//
 	SOCKET _sock;
-	//客户端发送缓冲区大小
-	int _nSendBuffSize;
-	//客户端接收缓冲区大小
-	int _nRecvBuffSize;
-	//客户端连接上限
-	int _nMaxClient;
+
 protected:
 	//收到消息计数
 	std::atomic_int _recvCount;
@@ -40,7 +35,12 @@ protected:
 	std::atomic_int _clientCount;
 	//recv函数计数
 	std::atomic_int _msgCount;
-
+	//客户端发送缓冲区大小
+	int _nSendBuffSize;
+	//客户端接收缓冲区大小
+	int _nRecvBuffSize;
+	//客户端连接上限
+	int _nMaxClient;
 public:
 	EasyTcpServer() {
 		_sock = INVALID_SOCKET;

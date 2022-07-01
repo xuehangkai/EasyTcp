@@ -3,6 +3,10 @@
 
 #include"Cell.hpp"
 
+#ifdef CELL_USE_IOCP
+	#include"CELLIOCP.hpp"
+#endif
+
 class CELLBuffer
 {
 public:
@@ -72,7 +76,7 @@ public:
 			ret = send(sockfd, _pBuff, _nlast, 0);
 
 			if (ret<=0) {
-				CELLLog_PError("write2socket:sockfd<%d> nsize<%d> nlast<%d> ret<%d>",sockfd,_nSize,_nlast,ret);
+				CELLLog_PError("write2socket:sockfd<%d> nsize<%d> nlast<%d> ret<%d>\n",sockfd,_nSize,_nlast,ret);
 				return SOCKET_ERROR;
 			}
 			if (ret==_nlast) {
@@ -95,7 +99,7 @@ public:
 			int nLen = (int)recv(sockfd, szRecv, _nSize - _nlast, 0);
 
 			if (nLen <= 0) {
-				CELLLog_PError("read4socket:sockfd<%d> nsize<%d> nlast<%d> nlen<%d>", sockfd, _nSize, _nlast, nLen);
+				CELLLog_PError("read4socket:sockfd<%d> nsize<%d> nlast<%d> nlen<%d>\n", sockfd, _nSize, _nlast, nLen);
 				return SOCKET_ERROR;
 			}
 			//消息缓冲区的数据尾部位置后移
@@ -116,6 +120,65 @@ public:
 	bool needWrite() {
 		return _nlast>0;
 	}
+
+#ifdef CELL_USE_IOCP
+	IO_DATA_BASE* makeRecvIoData(SOCKET sockfd)
+	{
+		int nLen = _nSize - _nlast;
+		if (nLen > 0)
+		{
+			_ioData.wsabuff.buf = _pBuff + _nlast;
+			_ioData.wsabuff.len = nLen;
+			_ioData.sockfd = sockfd;
+			return &_ioData;
+		}
+		return nullptr;
+	}
+
+	IO_DATA_BASE* makeSendIoData(SOCKET sockfd)
+	{
+		if (_nlast > 0)
+		{
+			_ioData.wsabuff.buf = _pBuff;
+			_ioData.wsabuff.len = _nlast;
+			_ioData.sockfd = sockfd;
+			return &_ioData;
+		}
+		return nullptr;
+	}
+
+	bool read4iocp(int nRecv)
+	{
+		if (nRecv > 0 && _nSize - _nlast >= nRecv)
+		{
+			_nlast += nRecv;
+			return true;
+		}
+		CELLLog_Error("read4iocp:sockfd<%d> nSize<%d> nLast<%d> nRecv<%d>\n", _ioData.sockfd, _nSize, _nlast, nRecv);
+		return false;
+	}
+
+	bool write2iocp(int nSend)
+	{
+		if (_nlast < nSend)
+		{
+			CELLLog_Error("write2iocp:sockfd<%d> nSize<%d> nLast<%d> nSend<%d>\n", _ioData.sockfd, _nSize, _nlast, nSend);
+			return false;
+		}
+		if (_nlast == nSend)
+		{//_nlast=2000 实际发送nSend=2000
+		 //数据尾部位置清零
+			_nlast = 0;
+		}
+		else {
+			//_nlast=2000 实际发送ret=1000
+			_nlast -= nSend;
+			memcpy(_pBuff, _pBuff + nSend, _nlast);
+		}
+		_fullCount = 0;
+		return true;
+	}
+#endif // CELL_USE_IOCP
 private:
 	//第二缓冲区 发送缓冲区
 	char * _pBuff=nullptr;
@@ -127,6 +190,9 @@ private:
 	int _nSize=0;
 	//缓冲区写次数满计数
 	int _fullCount = 0;
+#ifdef CELL_USE_IOCP
+	IO_DATA_BASE _ioData = {};
+#endif // CELL_USE_IOCP
 };
 
 

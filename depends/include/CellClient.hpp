@@ -38,11 +38,19 @@ public:
 	}
 	~CellClient() {
 		CELLLog_Debug("<s=%d>CellClient<%d>.~CellClient\n",serverId,id);
-		if (INVALID_SOCKET!=_sockfd) {
+		destory();
+	}
+
+	void destory()
+	{
+		if (INVALID_SOCKET != _sockfd)
+		{
+			CELLLog_Info("CELLClient::destory[sId=%d id=%d socket=%d]\n", serverId, id, (int)_sockfd);
 			CELLNetWork::destorySocket(_sockfd);
 			_sockfd = INVALID_SOCKET;
 		}
 	}
+
 	SOCKET getSockfd() {
 		return _sockfd;
 	}
@@ -115,6 +123,43 @@ public:
 		}
 		return false;
 	}
+#ifdef CELL_USE_IOCP
+	IO_DATA_BASE* makeRecvIoData()
+	{
+		if (_isPostRecv)
+			return nullptr;
+		_isPostRecv = true;
+		return _recvBuff.makeRecvIoData(_sockfd);
+	}
+	void recv4iocp(int nRecv)
+	{
+		if (!_isPostRecv)
+			CELLLog_Error("recv4iocp _isPostRecv is false\n");
+		_isPostRecv = false;
+		_recvBuff.read4iocp(nRecv);
+	}
+
+	IO_DATA_BASE* makeSendIoData()
+	{
+		if (_isPostSend)
+			return nullptr;
+		_isPostSend = true;
+		return _sendBuff.makeSendIoData(_sockfd);
+	}
+
+	void send2iocp(int nSend)
+	{
+		if (!_isPostSend)
+			CELLLog_Error("send2iocp _isPostSend is false\n");
+		_isPostSend = false;
+		_sendBuff.write2iocp(nSend);
+	}
+
+	bool isPostIoAction()
+	{
+		return _isPostRecv || _isPostSend;
+	}
+#endif // CELL_USE_IOCP
 private:
 	// socket fd_set file desc set
 	SOCKET _sockfd;
@@ -128,6 +173,9 @@ private:
 	time_t _dtSend;
 	//发送缓冲区遇到写满情况计数
 	int _sendBuffFullCount = 0;
-
+#ifdef CELL_USE_IOCP
+	bool _isPostRecv = false;
+	bool _isPostSend = false;
+#endif
 };
 #endif // !1
