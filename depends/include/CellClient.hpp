@@ -6,7 +6,7 @@
 #include"CELLNetWork.hpp"
 
 //客户端心跳检测死亡计时时间
-#define CLIENT_HEART_DEAD_TIME 60000
+#define CLIENT_HEART_DEAD_TIME 120000
 
 //在间隔指定时间后把发送缓冲区内缓存的消息数据发送给客户端
 #define CLIENT_SEND_BUFF_TIME 200
@@ -37,7 +37,7 @@ public:
 		resetDTSend();
 	}
 	~CellClient() {
-		CELLLog_Debug("<s=%d>CellClient<%d>.~CellClient\n",serverId,id);
+		//CELLLog_Debug("<s=%d>CellClient<%d>.~CellClient\n",serverId,id);
 		destory();
 	}
 
@@ -45,7 +45,7 @@ public:
 	{
 		if (INVALID_SOCKET != _sockfd)
 		{
-			CELLLog_Info("CELLClient::destory[sId=%d id=%d socket=%d]\n", serverId, id, (int)_sockfd);
+			//CELLLog_Info("CELLClient::destory[sId=%d id=%d socket=%d]\n", serverId, id, (int)_sockfd);
 			CELLNetWork::destorySocket(_sockfd);
 			_sockfd = INVALID_SOCKET;
 		}

@@ -12,12 +12,17 @@ class CellEpollServer:public CellServer
 {
 public:
 	CellEpollServer(){
-		_ep.create(10240);
+		
 	}
 
 	~CellEpollServer(){
 		Close();
 	}
+
+	void setClientNum(int nScoketNum) {
+		_ep.create(nScoketNum);
+	}
+
 	bool DoNetEvents() {
 		
 		for(auto iter:_clients){

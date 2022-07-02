@@ -11,9 +11,20 @@
 class CellSelectServer:public CellServer
 {
 public:
+	CellSelectServer() {
+		
+	}
+
 	~CellSelectServer(){
 		Close();
 	}
+
+	void setClientNum(int nScoketNum) {
+		_fdRead.create(nScoketNum);
+		_fdWrite.create(nScoketNum);
+		_fdRead_bak.create(nScoketNum);
+	}
+
 	bool DoNetEvents() {
 		//fd_set fdExc;
 		//计算可读集合

@@ -8,7 +8,6 @@
 #include"CellClient.hpp"
 #include"INetEvent.hpp"
 #include"CELLConfig.hpp"
-#include"CELLFDSet.hpp"
 
 //网络消息接收处理服务类
 class CellServer
@@ -25,6 +24,12 @@ public:
 		_id = id;
 		_taskServer.serverId = id;
 	}
+
+	virtual void setClientNum(int nScoketNum) {
+		
+
+	}
+
 	void setEventObj(INetEvent* event) {
 		_pNetEvent = event;
 	}
@@ -92,7 +97,7 @@ public:
 				OnClientLeave(pClient);
 #endif // CELL_USE_IOCP
 				_clients.erase(iter);
-				//iter++;
+				iter++;
 				continue;
 			}
 			////定时发送检测

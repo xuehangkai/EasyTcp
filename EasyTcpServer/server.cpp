@@ -156,7 +156,7 @@ int main(int argc,char * args[]) {
 	MyServer server;
 	server.iniSocket();
 	server.Bind(strIP, nPort);
-	server.Listen(64);
+	server.Listen(SOMAXCONN);
 	server.Start(nThread);
 
 	//启动UI线程

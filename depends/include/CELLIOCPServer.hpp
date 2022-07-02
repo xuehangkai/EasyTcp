@@ -1,11 +1,10 @@
-#ifndef _CELLIOCPServer_HPP_
+ï»¿#ifndef _CELLIOCPServer_HPP_
 #define _CELLIOCPServer_HPP_
 
 #include"CellServer.hpp"
 #include"CELLIOCP.hpp"
 
-
-//ÍøÂçÏûÏ¢½ÓÊÕ´¦Àí·þÎñÀà
+//ç½‘ç»œæ¶ˆæ¯æŽ¥æ”¶å¤„ç†æœåŠ¡ç±»
 class CELLIOCPServer:public CellServer
 {
 public:
@@ -25,7 +24,7 @@ public:
 		for (auto iter = _clients.begin(); iter != _clients.end(); )
 		{	
 			pClient = iter->second;
-			//ÐèÒªÐ´Êý¾ÝµÄ¿Í»§¶Ë,²ÅpostSend
+			//éœ€è¦å†™æ•°æ®çš„å®¢æˆ·ç«¯,æ‰postSend
 			if (pClient->needWrite())
 			{
 				auto pIoData = pClient->makeSendIoData();
@@ -78,10 +77,10 @@ public:
 		}
 		return true;
 	}
-	//Ã¿´ÎÖ»´¦ÀíÒ»¼þÍøÂçÊÂ¼þ
-	//ret = -1 iocp³ö´í
-	//ret =  0 Ã»ÓÐÊÂ¼þ
-	//ret =  1 ÓÐÊÂ¼þ·¢Éú
+	//æ¯æ¬¡åªå¤„ç†ä¸€ä»¶ç½‘ç»œäº‹ä»¶
+	//ret = -1 iocpå‡ºé”™
+	//ret =  0 æ²¡æœ‰äº‹ä»¶
+	//ret =  1 æœ‰äº‹ä»¶å‘ç”Ÿ
 	int DoIocpNetEvents()
 	{
 		int ret = _iocp.wait(_ioEvent, 1);
@@ -96,12 +95,12 @@ public:
 		}
 		//---
 
-		//½ÓÊÕÊý¾Ý Íê³É Completion
+		//æŽ¥æ”¶æ•°æ® å®Œæˆ Completion
 		if (IO_TYPE::RECV == _ioEvent.pIoData->iotype)
 		{
 			if (_ioEvent.bytesTrans <= 0)
-			{//¿Í»§¶Ë¶Ï¿ª´¦Àí
-				CELLLog_Info("rmClient sockfd=%d, IO_TYPE::RECV bytesTrans=%d\n", _ioEvent.pIoData->sockfd, _ioEvent.bytesTrans);
+			{//å®¢æˆ·ç«¯æ–­å¼€å¤„ç†
+				//CELLLog_Info("rmClient sockfd=%d, IO_TYPE::RECV bytesTrans=%d\n", _ioEvent.pIoData->sockfd, _ioEvent.bytesTrans);
 				rmClient(_ioEvent);
 				return ret;
 			}
@@ -115,12 +114,12 @@ public:
 			//
 			//CELLLog_Info("IO_TYPE::RECV sockfd=%d, bytesTrans=%d\n", _ioEvent.pIoData->sockfd, _ioEvent.bytesTrans);
 		}
-		//·¢ËÍÊý¾Ý Íê³É Completion
+		//å‘é€æ•°æ® å®Œæˆ Completion
 		else if (IO_TYPE::SEND == _ioEvent.pIoData->iotype)
 		{
 			if (_ioEvent.bytesTrans <= 0)
-			{//¿Í»§¶Ë¶Ï¿ª´¦Àí
-				CELLLog_Info("rmClient sockfd=%d, IO_TYPE::SEND bytesTrans=%d\n", _ioEvent.pIoData->sockfd, _ioEvent.bytesTrans);
+			{//å®¢æˆ·ç«¯æ–­å¼€å¤„ç†
+				//CELLLog_Info("rmClient sockfd=%d, IO_TYPE::SEND bytesTrans=%d\n", _ioEvent.pIoData->sockfd, _ioEvent.bytesTrans);
 				rmClient(_ioEvent);
 				return ret;
 			}

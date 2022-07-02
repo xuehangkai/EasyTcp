@@ -32,6 +32,8 @@ int nWorkSleep = 1;
 int nSendBuffSize = SEND_BUFF_SZIE;
 //客户端接收缓冲区大小
 int nRecvBuffSize = RECV_BUFF_SZIE;
+//
+bool bChekSendBack = true;
 
 class MyClient:public EasyIOCPClient
 {
@@ -43,6 +45,7 @@ public:
 	}
 	//响应网络消息
 	virtual void OnNetMsg(netmsg_DataHeader* header) {
+		_bSend = false;
 		switch (header->cmd)
 		{
 		case CMD_LOGIN_RESULT:
@@ -80,12 +83,13 @@ public:
 	{
 		int ret = 0;
 		//如果剩余发送次数大于0
-		if (_nSendCount > 0)
+		if (_nSendCount > 0&& !_bSend)
 		{
 			login->msgID = _nSendMsgID;
 			ret = SendData(login);
 			if (SOCKET_ERROR != ret)
 			{
+				_bSend= bChekSendBack;
 				++_nSendMsgID;
 				//如果剩余发送次数减少一次
 				--_nSendCount;
@@ -97,6 +101,8 @@ public:
 	bool checkSend(time_t dt)
 	{
 		_tRestTime += dt;
+		CELLLog_Info("_tRestTime<%d>\n", _tRestTime);
+		CELLLog_Info("nSendSleep<%d>\n", nSendSleep);
 		//每经过nSendSleep毫秒
 		if (_tRestTime >= nSendSleep)
 		{
@@ -107,18 +113,20 @@ public:
 		}
 		return _nSendCount > 0;
 	}
-
+public:
+	//发送时间计数
+	time_t _tRestTime = 0;
 private:
 	//接收消息id计数
 	int _nRecvMsgID = 1;
 	//发送消息id计数
 	int _nSendMsgID = 1;
-	//发送时间计数
-	time_t _tRestTime = 0;
 	//发送条数计数
 	int _nSendCount = 0;
 	//检查接收到的服务端消息ID是否连续
 	bool _bCheckMsgID = false;
+	//
+	bool _bSend = false;
 };
 
 std::atomic_int sendCount(0);
@@ -131,13 +139,30 @@ void WorkThread(CELLThread* pThread, int id) {
 	//客户端数组
 	std::vector<MyClient*> clients(nClient);
 	//计算本线程客户端在clients中对应的index
+	int m = 0;
+	int s= nThread - nClient % nThread;
+	if (s== nThread) {
+		m = 0;
+	}
+	else
+	{
+		if (s<=id) {
+			m = 1;
+		}
+	}
+
 	int begin = 0;
-	int end = nClient;
+	int end = nClient/nThread+m;
+	if (end<1) {
+		end = 1;
+	}
+	int nTemp1 = nSendSleep > 0? nSendSleep:1;
 	for (int n = begin; n < end; n++)
 	{
 		if (!pThread->isRun())
 			break;
 		clients[n] = new MyClient();
+		clients[n]->_tRestTime = n % nTemp1;
 		//多线程时让下CPU
 		CELLThread::Sleep(0);
 	}
@@ -242,6 +267,8 @@ int main(int argc, char* args[]) {
 	nClient = CELLConfig::Instance().getInt("nClient", 10000);
 	nMsg = CELLConfig::Instance().getInt("nMsg", 10);
 	nSendSleep = CELLConfig::Instance().getInt("nSendSleep", 100);
+	nWorkSleep = CELLConfig::Instance().getInt("nWorkSleep", 1);
+	bChekSendBack= CELLConfig::Instance().hasKey("-chekSendBack");
 	nSendBuffSize = CELLConfig::Instance().getInt("nSendBuffSize", SEND_BUFF_SZIE);
 	nRecvBuffSize = CELLConfig::Instance().getInt("nRecvBuffSize", RECV_BUFF_SZIE);
 
@@ -273,7 +300,7 @@ int main(int argc, char* args[]) {
 		CELLThread* t = new CELLThread();
 		t->Start(nullptr, [n](CELLThread* pThread) {
 			WorkThread(pThread, n + 1);
-			});
+		});
 		threads.push_back(t);
 	}
 
@@ -288,7 +315,7 @@ int main(int argc, char* args[]) {
 			sendCount = 0;
 			tTime.update();
 		}
-		CELLThread::Sleep(1);
+		//CELLThread::Sleep(1);
 	}
 
 	//

@@ -18,6 +18,7 @@ protected:
 	//处理网络消息
 	void onRun(CELLThread* pThread) {
 		CELLFDSet fdRead;
+		fdRead.create(_nMaxClient);
 		while (pThread->isRun()) {
 			time4msg();
 			//fd_set fdWrite;

@@ -59,7 +59,7 @@ public:
 		_completionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
 		if (NULL == _completionPort)
 		{
-			CELLLog_PError("IOCP create failed, CreateIoCompletionPort");
+			CELLLog_PError("IOCP create failed, CreateIoCompletionPort\n");
 			return false;
 		}
 		return true;
@@ -81,7 +81,7 @@ public:
 		auto ret = CreateIoCompletionPort((HANDLE)sockfd, _completionPort, (ULONG_PTR)sockfd, 0);
 		if (!ret)
 		{
-			CELLLog_PError("IOCP reg sockfd failed, CreateIoCompletionPort");
+			CELLLog_PError("IOCP reg sockfd failed, CreateIoCompletionPort\n");
 			return false;
 		}
 		return true;
@@ -94,7 +94,7 @@ public:
 		auto ret = CreateIoCompletionPort((HANDLE)sockfd, _completionPort, (ULONG_PTR)ptr, 0);
 		if (!ret)
 		{
-			CELLLog_PError("IOCP reg sockfd+ptr failed, CreateIoCompletionPort");
+			CELLLog_PError("IOCP reg sockfd+ptr failed, CreateIoCompletionPort\n");
 			return false;
 		}
 		return true;
@@ -105,7 +105,7 @@ public:
 	{
 		if (!_AcceptEx)
 		{
-			CELLLog_Error("error, postAccept _AcceptEx is null");
+			CELLLog_Error("error, postAccept _AcceptEx is null\n");
 			return false;
 		}
 
@@ -124,7 +124,7 @@ public:
 			int err = WSAGetLastError();
 			if (ERROR_IO_PENDING != err)
 			{
-				CELLLog_Error("AcceptEx failed with error %d", err);
+				CELLLog_Error("AcceptEx failed with error %d\n", err);
 				return false;
 			}
 		}
@@ -147,7 +147,7 @@ public:
 				{
 					return false;
 				}
-				CELLLog_Error("WSARecv failed with error %d", err);
+				CELLLog_Error("WSARecv failed with error %d\n", err);
 				return false;
 			}
 		}
@@ -169,7 +169,7 @@ public:
 				{
 					return false;
 				}
-				CELLLog_Error("WSASend failed with error %d", err);
+				CELLLog_Error("WSASend failed with error %d\n", err);
 				return false;
 			}
 		}
@@ -200,7 +200,11 @@ public:
 			{
 				return 1;
 			}
-			CELLLog_PError("GetQueuedCompletionStatus failed");
+			if (ERROR_SEM_TIMEOUT == err)
+			{
+				return 1;
+			}
+			CELLLog_PError("GetQueuedCompletionStatus failed\n");
 			return -1;
 		}
 		return 1;
@@ -210,12 +214,12 @@ public:
 	{
 		if (INVALID_SOCKET != _sockServer)
 		{
-			CELLLog_Error("loadAcceptEx _sockServer != INVALID_SOCKET");
+			CELLLog_Error("loadAcceptEx _sockServer != INVALID_SOCKET\n");
 			return false;
 		}
 		if (_AcceptEx)
 		{
-			CELLLog_Error("loadAcceptEx _AcceptEx != NULL");
+			CELLLog_Error("loadAcceptEx _AcceptEx != NULL\n");
 			return false;
 		}
 		_sockServer = ListenSocket;
@@ -227,7 +231,7 @@ public:
 			&dwBytes, NULL, NULL);
 
 		if (iResult == SOCKET_ERROR) {
-			CELLLog_Error("WSAIoctl failed with error: %u", WSAGetLastError());
+			CELLLog_Error("WSAIoctl failed with error: %u\n", WSAGetLastError());
 			return false;
 		}
 		return true;

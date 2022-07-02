@@ -5,13 +5,13 @@ set cmd="strIP=any"
 ::服务端端口
 set cmd=%cmd% nPort=4567
 ::消息处理线程数量
-set cmd=%cmd% nThread=1
+set cmd=%cmd% nThread=4
 ::客户端连接上限
-set cmd=%cmd% nMaxClient=10000
+set cmd=%cmd% nMaxClient=100064
 ::客户端发送缓冲区大小（字节）
-set cmd=%cmd% nSendBuffSize=20480
+set cmd=%cmd% nSendBuffSize=10240
 ::客户端接收缓冲区大小（字节）
-set cmd=%cmd% nRecvBuffSize=20480
+set cmd=%cmd% nRecvBuffSize=10240
 ::收到消息后将返回应答消息
 set cmd=%cmd% -sendback
 ::提示发送缓冲区已写满

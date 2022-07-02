@@ -13,7 +13,6 @@
 #include"INetEvent.hpp"
 #include"CELLNetWork.hpp"
 #include"CELLConfig.hpp"
-#include"CELLFDSet.hpp"
 
 //new 在堆内存
 class EasyTcpServer : public INetEvent
@@ -29,24 +28,27 @@ private:
 	SOCKET _sock;
 
 protected:
-	//收到消息计数
-	std::atomic_int _recvCount;
-	//客户端计数
-	std::atomic_int _clientCount;
-	//recv函数计数
-	std::atomic_int _msgCount;
 	//客户端发送缓冲区大小
 	int _nSendBuffSize;
 	//客户端接收缓冲区大小
 	int _nRecvBuffSize;
 	//客户端连接上限
 	int _nMaxClient;
+	//收到消息计数
+	std::atomic_int _recvCount;
+	//recv函数计数
+	std::atomic_int _msgCount;
+	//客户端计数
+	std::atomic_int _clientAccept;
+	//已分配客户端计数
+	std::atomic_int _clientJoin;
 public:
 	EasyTcpServer() {
 		_sock = INVALID_SOCKET;
 		_recvCount = 0;
-		_clientCount = 0;
+		_clientAccept = 0;
 		_msgCount = 0;
+		_clientJoin = 0;
 		_nSendBuffSize = CELLConfig::Instance().getInt("nSendBuffSize", SEND_BUFF_SZIE);
 		_nRecvBuffSize = CELLConfig::Instance().getInt("nRecvBuffSize", RECV_BUFF_SZIE);
 		_nMaxClient = CELLConfig::Instance().getInt("nMaxClient", FD_SETSIZE);
@@ -133,8 +135,9 @@ public:
 		}
 		else
 		{
-			if (_clientCount < _nMaxClient)
+			if (_clientAccept < _nMaxClient)
 			{
+				_clientAccept++;
 				//将新客户端分配给客户数量最少的cellServer
 				addClientToCellServer(new CellClient(cSocket, _nSendBuffSize, _nRecvBuffSize));
 				//获取IP地址 inet_ntoa(clientAddr.sin_addr)
@@ -163,6 +166,7 @@ public:
 		for (int n = 0; n < nCellServer;n++) {
 			auto ser = new ServerT();
 			ser->setId(n + 1);
+			ser->setClientNum((_nMaxClient/ nCellServer)+1);
 			_cellServers.push_back(ser);
 			//注册网络事件接受对象
 			ser->setEventObj(this);
@@ -190,12 +194,13 @@ public:
 
 	//只会被一个线程调用 安全
 	virtual void OnNetJoin(CellClient* pClient) {
-		_clientCount++;
+		_clientJoin++;
 	}
 
 	//cellserver 4 多个线程触发不安全
 	virtual void OnNetLeave(CellClient* pClient) {
-		_clientCount--;
+		_clientAccept--;
+		_clientJoin--;
 	}
 
 	//cellserver 4 多个线程触发不安全
@@ -215,7 +220,7 @@ protected:
 	void time4msg() {
 		auto t1 = _tTime.getElapsedSecond();
 		if (t1 >= 1.0) {
-			CELLLog_Info("thread<%d>, time<%lf>, socket<%d>, clients<%d>, recv<%d>, msgCount<%d>\n", (int)_cellServers.size(), t1, (int)_sock, (int)_clientCount, (int)_recvCount, (int)_msgCount);
+			CELLLog_Info("thread<%d>, time<%lf>, socket<%d>, accept<%d>, join<%d>, recv<%d>, msgCount<%d>\n", (int)_cellServers.size(), t1, (int)_sock, (int)_clientAccept, (int)_clientJoin, (int)_recvCount, (int)_msgCount);
 			_recvCount = 0;
 			_msgCount = 0;
 			_tTime.update();

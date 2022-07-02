@@ -17,7 +17,7 @@ protected:
 	//处理网络消息
 	void onRun(CELLThread* pThread) {
 		CELLEpoll ep;
-		ep.create(1);
+		ep.create(_nMaxClient);
 		ep.ctl(EPOLL_CTL_ADD,sockfd(), EPOLLIN);
 		while (pThread->isRun()) {
 			time4msg();
